@@ -1,4 +1,8 @@
+#if defined(WIN32)
 #include <windows.h>
+#else
+#include <stdio.h>
+#endif 
 #include "Example.h"
 
 
@@ -43,6 +47,45 @@ Structure *ExampleDataDescription::CreateStructure(const String<>& identifier) c
 	return (nullptr);
 }
 
+static size_t GetFileSize(FILE *fp) {    
+    fseek(fp, 0L, SEEK_END); 
+    size_t sz = ftell(fp);
+    fseek(fp, 0L, SEEK_SET);
+    return sz; 
+}
+
+#if !defined(WIN32)
+int main(int argc, char *argv[]) {
+    FILE *fp = fopen("../../Example/Example.oddl", "r");
+    if (!fp) {
+        return -1; 
+    }
+
+    ExampleDataDescription	exampleDataDescription;
+    
+    size_t size = GetFileSize(fp);
+    char *buffer = new char[size + 1];
+    fread(buffer, size, 1, fp);
+    buffer[size] = 0;
+    
+    DataResult result = exampleDataDescription.ProcessText(buffer);
+    if (result == kDataOkay)
+    {
+        const Structure *structure = exampleDataDescription.GetRootStructure()->GetFirstSubnode();
+        while (structure)
+        {
+            // This loops over all top-level structures in the file.
+            // Do something with the data...
+            printf("hello\n");
+            structure = structure->GetNextSubnode();
+        }
+    }
+
+    delete[] buffer;
+    return 0;
+}
+
+#else 
 
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLine, int cmdShow)
 {
@@ -86,3 +129,5 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR commandLine
 
 	return (0);
 }
+
+#endif 
